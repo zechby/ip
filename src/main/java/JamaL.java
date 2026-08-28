@@ -1,8 +1,4 @@
 import java.util.Scanner;
-
-/**
- * JamaL is a personal assistant chatbot that manages a task list.
- */
 public class JamaL {
     /** Name shown to the user in the greeting. */
     private static final String NAME = "JamaL";
@@ -24,20 +20,38 @@ public class JamaL {
     private static Task[] taskList = new Task[MAX_TASKS];
     private static int taskCount = 0;
 
-    /**
-     * Runs the chatbot's main loop, reading commands until the user types "bye".
-     */
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
         greeting();
         while (true) {
-            String input = in.nextLine().trim();
-            if (input.equals("bye")) {
+            String[] input = in.nextLine().trim().split(" ", 2);
+            String command = input[0];
+            if (command.equals("bye")) {
                 break;
-            } else if (input.equals("list")) {
+            } else if (command.equals("list")) {
                 listTasks();
+            } else if (command.equals("mark")) {
+                if (input.length > 1) {
+                    int index = Integer.parseInt(input[1]) - 1;
+                    taskList[index].setDone(true);
+                    System.out.println(DIVIDER);
+                    System.out.println("task " + input[1] + " is marked");
+                    System.out.println(DIVIDER);
+                } else {
+                    System.out.println("mark command needs a task.");
+                }
+            } else if (command.equals("unmark")) {
+                if (input.length > 1) {
+                    int index = Integer.parseInt(input[1]) - 1;
+                    taskList[index].setDone(false);
+                    System.out.println(DIVIDER);
+                    System.out.println("task " + input[1] + " is unmarked");
+                    System.out.println(DIVIDER);
+                } else {
+                    System.out.println("unmark command needs a task.");
+                }
             } else {
-                addTask(input);
+                addTask(command);
             }
         }
         goodbye();
@@ -92,7 +106,11 @@ public class JamaL {
             return;
         }
         for (int i = 0; i < taskCount; i++) {
-            System.out.println((i + 1) + ". " + taskList[i].getDescription());
+            String statusIndicator = " ";
+            if (taskList[i].isDone()) {
+                statusIndicator = "X";
+            }
+            System.out.println((i + 1) + ".[" + statusIndicator + "] " + taskList[i].getDescription());
         }
         System.out.println(DIVIDER);
     }
