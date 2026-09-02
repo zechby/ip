@@ -1,0 +1,26 @@
+/**
+ * tasks that need to be done before a specific date/time, e.g., submit report by 11/10/2019 5pm
+ */
+public class Deadline extends Task {
+    /** Time the task is due, as typed by the user. */
+    private String by;
+
+    public Deadline(String description, String by) {
+        super(description);
+        this.by = by;
+    }
+
+    public String getBy() {
+        return by;
+    }
+
+    @Override
+    public String getTypeIcon() {
+        return "D";
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + " (by: " + by + ")";
+    }
+}
