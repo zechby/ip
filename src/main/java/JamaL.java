@@ -42,17 +42,11 @@ public class JamaL {
                 if (command.equals("list")) {
                     listTasks();
                 } else if (command.equals("mark")) {
-                    if (arguments.isEmpty()) {
-                        throw new JamaLException("mark what.");
-                    }
-                    int index = Integer.parseInt(arguments) - 1;
+                    int index = parseTaskIndex(arguments, "mark");
                     taskList[index].setDone(true);
                     printBlock("task " + arguments + " is marked", "  " + taskList[index]);
                 } else if (command.equals("unmark")) {
-                    if (arguments.isEmpty()) {
-                        throw new JamaLException("unmark what.");
-                    }
-                    int index = Integer.parseInt(arguments) - 1;
+                    int index = parseTaskIndex(arguments, "unmark");
                     taskList[index].setDone(false);
                     printBlock("task " + arguments + " is unmarked", "  " + taskList[index]);
                 } else if (command.equals("todo")) {
@@ -62,8 +56,8 @@ public class JamaL {
                 } else if (command.equals("event")) {
                     addEvent(arguments);
                 } else {
-                    // Anything else is taken as a todo task
-                    addTodo(String.join(" ", input));
+                    // Anything that is not a known command word is rejected
+                    throw new JamaLException("I'm not doing whatever " + command + " is.");
                 }
             } catch (JamaLException e) {
                 printBlock(e.getMessage());
@@ -100,6 +94,35 @@ public class JamaL {
             System.out.println(line);
         }
         System.out.println(DIVIDER);
+    }
+
+    /**
+     * Turns the argument of a mark/unmark command into an index into taskList.
+     *
+     * @param arguments Text typed after the command word, e.g. "2".
+     * @param command Command word, used in the error message.
+     * @return Zero-based index of the task the user meant.
+     * @throws JamaLException If the argument is missing, is not a number, or
+     *                        does not point at a task that exists.
+     */
+    private static int parseTaskIndex(String arguments, String command) throws JamaLException {
+        if (arguments.isEmpty()) {
+            throw new JamaLException(command + " what.");
+        }
+        int index;
+        try {
+            index = Integer.parseInt(arguments) - 1;
+        } catch (NumberFormatException e) {
+            // parseInt throws on anything that is not a plain number, e.g. "abc".
+            throw new JamaLException("that's not a number.");
+        }
+        // Slots from taskCount up to MAX_TASKS are still null, so checking
+        // against taskCount (not MAX_TASKS) is what stops a NullPointerException
+        // when the caller does taskList[index].setDone(...).
+        if (index < 0 || index >= taskCount) {
+            throw new JamaLException("no task " + arguments + ".");
+        }
+        return index;
     }
 
     /**
