@@ -33,33 +33,34 @@ public class JamaL {
 
             if (command.equals("bye")) {
                 break;
-            } else if (command.equals("list")) {
-                listTasks();
-            } else if (command.equals("mark")) {
-                if (!arguments.isEmpty()) {
-                    int index = Integer.parseInt(arguments) - 1;
+            }
+
+            // Every user-facing error is thrown as a JamaLException and caught
+            // here, so all error messages are printed in the same format from
+            // one place instead of each command printing its own.
+            try {
+                if (command.equals("list")) {
+                    listTasks();
+                } else if (command.equals("mark")) {
+                    int index = parseTaskIndex(arguments, "mark");
                     taskList[index].setDone(true);
                     printBlock("task " + arguments + " is marked", "  " + taskList[index]);
-                } else {
-                    System.out.println("mark command needs a task.");
-                }
-            } else if (command.equals("unmark")) {
-                if (!arguments.isEmpty()) {
-                    int index = Integer.parseInt(arguments) - 1;
+                } else if (command.equals("unmark")) {
+                    int index = parseTaskIndex(arguments, "unmark");
                     taskList[index].setDone(false);
                     printBlock("task " + arguments + " is unmarked", "  " + taskList[index]);
+                } else if (command.equals("todo")) {
+                    addTodo(arguments);
+                } else if (command.equals("deadline")) {
+                    addDeadline(arguments);
+                } else if (command.equals("event")) {
+                    addEvent(arguments);
                 } else {
-                    System.out.println("unmark command needs a task.");
+                    // Anything that is not a known command word is rejected
+                    throw new JamaLException("I'm not doing whatever " + command + " is.");
                 }
-            } else if (command.equals("todo")) {
-                addTodo(arguments);
-            } else if (command.equals("deadline")) {
-                addDeadline(arguments);
-            } else if (command.equals("event")) {
-                addEvent(arguments);
-            } else {
-                // Anything else is taken as a todo task
-                addTodo(String.join(" ", input));
+            } catch (JamaLException e) {
+                printBlock(e.getMessage());
             }
         }
         goodbye();
@@ -96,14 +97,43 @@ public class JamaL {
     }
 
     /**
+     * Turns the argument of a mark/unmark command into an index into taskList.
+     *
+     * @param arguments Text typed after the command word, e.g. "2".
+     * @param command Command word, used in the error message.
+     * @return Zero-based index of the task the user meant.
+     * @throws JamaLException If the argument is missing, is not a number, or
+     *                        does not point at a task that exists.
+     */
+    private static int parseTaskIndex(String arguments, String command) throws JamaLException {
+        if (arguments.isEmpty()) {
+            throw new JamaLException(command + " what.");
+        }
+        int index;
+        try {
+            index = Integer.parseInt(arguments) - 1;
+        } catch (NumberFormatException e) {
+            // parseInt throws on anything that is not a plain number, e.g. "abc".
+            throw new JamaLException("that's not a number.");
+        }
+        // Slots from taskCount up to MAX_TASKS are still null, so checking
+        // against taskCount (not MAX_TASKS) is what stops a NullPointerException
+        // when the caller does taskList[index].setDone(...).
+        if (index < 0 || index >= taskCount) {
+            throw new JamaLException("no task " + arguments + ".");
+        }
+        return index;
+    }
+
+    /**
      * Creates a todo from the given description.
      *
      * @param description Text of the todo, e.g. "borrow book".
+     * @throws JamaLException If the description is empty, or the list is full.
      */
-    private static void addTodo(String description) {
+    private static void addTodo(String description) throws JamaLException {
         if (description.isEmpty()) {
-            printBlock("a todo needs a description.");
-            return;
+            throw new JamaLException("todo what.");
         }
         addTask(new Todo(description));
     }
@@ -113,12 +143,13 @@ public class JamaL {
      * {@code <description> /by <when>}.
      *
      * @param arguments Text typed after the "deadline" command word.
+     * @throws JamaLException If the description or the "/by" part is missing
+     *                        or empty, or the list is full.
      */
-    private static void addDeadline(String arguments) {
+    private static void addDeadline(String arguments) throws JamaLException {
         String[] parts = arguments.split(" /by ", 2);
         if (parts.length < 2 || parts[0].trim().isEmpty() || parts[1].trim().isEmpty()) {
-            printBlock("use: deadline <description> /by <when>");
-            return;
+            throw new JamaLException("deadline what /by when.");
         }
         addTask(new Deadline(parts[0].trim(), parts[1].trim()));
     }
@@ -128,17 +159,17 @@ public class JamaL {
      * {@code <description> /from <start> /to <end>}.
      *
      * @param arguments Text typed after the "event" command word.
+     * @throws JamaLException If the description, the "/from" part or the "/to"
+     *                        part is missing or empty, or the list is full.
      */
-    private static void addEvent(String arguments) {
+    private static void addEvent(String arguments) throws JamaLException {
         String[] descAndRest = arguments.split(" /from ", 2);
         if (descAndRest.length < 2 || descAndRest[0].trim().isEmpty()) {
-            printBlock("use: event <description> /from <start> /to <end>");
-            return;
+            throw new JamaLException("event what /from when /to when.");
         }
         String[] fromAndTo = descAndRest[1].split(" /to ", 2);
         if (fromAndTo.length < 2 || fromAndTo[0].trim().isEmpty() || fromAndTo[1].trim().isEmpty()) {
-            printBlock("use: event <description> /from <start> /to <end>");
-            return;
+            throw new JamaLException("event what /from when /to when.");
         }
         addTask(new Event(descAndRest[0].trim(), fromAndTo[0].trim(), fromAndTo[1].trim()));
     }
@@ -148,11 +179,11 @@ public class JamaL {
      * Takes a {@code Task}, so it works for every task type.
      *
      * @param newTask Task to add to the list.
+     * @throws JamaLException If the list is already holding MAX_TASKS tasks.
      */
-    private static void addTask(Task newTask) {
+    private static void addTask(Task newTask) throws JamaLException {
         if (taskCount >= MAX_TASKS) {
-            printBlock("No more than " + MAX_TASKS + " tasks.");
-            return;
+            throw new JamaLException("list's full.");
         }
         taskList[taskCount++] = newTask;
         String noun = taskCount > 1 ? " tasks now." : " task now.";
