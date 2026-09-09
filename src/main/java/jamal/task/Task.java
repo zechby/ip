@@ -1,3 +1,5 @@
+package jamal.task;
+
 /**
  * Base class for every type of task
  *

@@ -1,3 +1,5 @@
+package jamal.task;
+
 /**
  * tasks without any date/time attached to them, e.g., visit new theme park
  */

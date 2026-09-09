@@ -1,4 +1,11 @@
+package jamal;
+
 import java.util.Scanner;
+
+import jamal.task.Deadline;
+import jamal.task.Event;
+import jamal.task.Task;
+import jamal.task.Todo;
 
 public class JamaL {
     /** Name shown to the user in the greeting. */
