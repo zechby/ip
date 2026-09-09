@@ -1,3 +1,5 @@
+package jamal;
+
 /**
  * Exception used for every error JamaL reports back to the user.
  *

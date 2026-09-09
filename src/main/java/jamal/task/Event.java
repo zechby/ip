@@ -1,3 +1,5 @@
+package jamal.task;
+
 /**
  * Tasks that start at a specific date/time and end at a specific date/time,
  * e.g., (a) team project meeting 2/10/2019 2-4pm (b) orientation week 4/10/2019 to 11/10/2019
