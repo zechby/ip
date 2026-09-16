@@ -1,5 +1,6 @@
 package jamal;
 
+import java.util.ArrayList;
 import java.util.Scanner;
 
 import jamal.task.Deadline;
@@ -22,12 +23,12 @@ public class JamaL {
             + "\\________(____  /__|_|  (____  /_______ \\\n"
             + "              \\/      \\/     \\/        \\/";
 
-    /** Maximum number of tasks the list can hold. */
-    private static final int MAX_TASKS = 100;
-
-    /* Task array that stores every task*/
-    private static Task[] taskList = new Task[MAX_TASKS];
-    private static int taskCount = 0;
+    /**
+     * Stores every task in the order it was added.
+     * An ArrayList grows automatically and can remove items from the middle,
+     * so there is no fixed size limit and no separate counter to keep in sync.
+     */
+    private static final ArrayList<Task> taskList = new ArrayList<>();
 
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
@@ -50,12 +51,14 @@ public class JamaL {
                     listTasks();
                 } else if (command.equals("mark")) {
                     int index = parseTaskIndex(arguments, "mark");
-                    taskList[index].setDone(true);
-                    printBlock("task " + arguments + " is marked", "  " + taskList[index]);
+                    taskList.get(index).setDone(true);
+                    printBlock("task " + arguments + " is marked", "  " + taskList.get(index));
                 } else if (command.equals("unmark")) {
                     int index = parseTaskIndex(arguments, "unmark");
-                    taskList[index].setDone(false);
-                    printBlock("task " + arguments + " is unmarked", "  " + taskList[index]);
+                    taskList.get(index).setDone(false);
+                    printBlock("task " + arguments + " is unmarked", "  " + taskList.get(index));
+                } else if (command.equals("delete")) {
+                    deleteTask(parseTaskIndex(arguments, "delete"));
                 } else if (command.equals("todo")) {
                     addTodo(arguments);
                 } else if (command.equals("deadline")) {
@@ -104,7 +107,7 @@ public class JamaL {
     }
 
     /**
-     * Turns the argument of a mark/unmark command into an index into taskList.
+     * Turns the argument of a mark/unmark/delete command into an index into taskList.
      *
      * @param arguments Text typed after the command word, e.g. "2".
      * @param command Command word, used in the error message.
@@ -123,10 +126,9 @@ public class JamaL {
             // parseInt throws on anything that is not a plain number, e.g. "abc".
             throw new JamaLException("that's not a number.");
         }
-        // Slots from taskCount up to MAX_TASKS are still null, so checking
-        // against taskCount (not MAX_TASKS) is what stops a NullPointerException
-        // when the caller does taskList[index].setDone(...).
-        if (index < 0 || index >= taskCount) {
+        // Checking the bounds here gives a friendly message instead of letting
+        // taskList.get(index) throw an IndexOutOfBoundsException.
+        if (index < 0 || index >= taskList.size()) {
             throw new JamaLException("no task " + arguments + ".");
         }
         return index;
@@ -136,7 +138,7 @@ public class JamaL {
      * Creates a todo from the given description.
      *
      * @param description Text of the todo, e.g. "borrow book".
-     * @throws JamaLException If the description is empty, or the list is full.
+     * @throws JamaLException If the description is empty.
      */
     private static void addTodo(String description) throws JamaLException {
         if (description.isEmpty()) {
@@ -151,7 +153,7 @@ public class JamaL {
      *
      * @param arguments Text typed after the "deadline" command word.
      * @throws JamaLException If the description or the "/by" part is missing
-     *                        or empty, or the list is full.
+     *                        or empty.
      */
     private static void addDeadline(String arguments) throws JamaLException {
         String[] parts = arguments.split(" /by ", 2);
@@ -167,7 +169,7 @@ public class JamaL {
      *
      * @param arguments Text typed after the "event" command word.
      * @throws JamaLException If the description, the "/from" part or the "/to"
-     *                        part is missing or empty, or the list is full.
+     *                        part is missing or empty.
      */
     private static void addEvent(String arguments) throws JamaLException {
         String[] descAndRest = arguments.split(" /from ", 2);
@@ -186,29 +188,45 @@ public class JamaL {
      * Takes a {@code Task}, so it works for every task type.
      *
      * @param newTask Task to add to the list.
-     * @throws JamaLException If the list is already holding MAX_TASKS tasks.
      */
-    private static void addTask(Task newTask) throws JamaLException {
-        if (taskCount >= MAX_TASKS) {
-            throw new JamaLException("list's full.");
-        }
-        taskList[taskCount++] = newTask;
-        String noun = taskCount > 1 ? " tasks now." : " task now.";
-        printBlock("added:", "  " + newTask, "you got " + taskCount + noun);
+    private static void addTask(Task newTask) {
+        taskList.add(newTask);
+        printBlock("added:", "  " + newTask, "you got " + taskCountText() + " now.");
+    }
+
+    /**
+     * Removes the task at the given index and confirms it to the user.
+     * ArrayList.remove shifts the later tasks down, so the numbering in
+     * the next "list" stays continuous.
+     *
+     * @param index Zero-based index, already checked by parseTaskIndex.
+     */
+    private static void deleteTask(int index) {
+        Task removed = taskList.remove(index);
+        printBlock("gone:", "  " + removed, "you got " + taskCountText() + " left.");
+    }
+
+    /**
+     * Returns the number of tasks with the right singular/plural noun,
+     * e.g. "1 task" or "3 tasks".
+     */
+    private static String taskCountText() {
+        int count = taskList.size();
+        return count + (count == 1 ? " task" : " tasks");
     }
 
     /** Prints all tasks in the list, numbered starting from 1. */
     private static void listTasks() {
         System.out.println(DIVIDER);
-        if (taskCount == 0) {
+        if (taskList.isEmpty()) {
             System.out.println("You got no tasks.");
             System.out.println(DIVIDER);
             return;
         }
-        for (int i = 0; i < taskCount; i++) {
+        for (int i = 0; i < taskList.size(); i++) {
             // toString() picks the tasktype, so each line shows the
             // right type icon and date/time details.
-            System.out.println((i + 1) + "." + taskList[i]);
+            System.out.println((i + 1) + "." + taskList.get(i));
         }
         System.out.println(DIVIDER);
     }
