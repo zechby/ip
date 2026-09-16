@@ -29,9 +29,13 @@ public class JamaL {
     private static Task[] taskList = new Task[MAX_TASKS];
     private static int taskCount = 0;
 
+    /** Reads and writes the task list to ./data/jamal.txt. */
+    private static final Storage storage = new Storage();
+
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
         greeting();
+        loadTasks();
         while (true) {
             // Split into the command word and everything after it
             String[] input = in.nextLine().trim().split(" ", 2);
@@ -51,10 +55,12 @@ public class JamaL {
                 } else if (command.equals("mark")) {
                     int index = parseTaskIndex(arguments, "mark");
                     taskList[index].setDone(true);
+                    storage.save(taskList, taskCount);
                     printBlock("task " + arguments + " is marked", "  " + taskList[index]);
                 } else if (command.equals("unmark")) {
                     int index = parseTaskIndex(arguments, "unmark");
                     taskList[index].setDone(false);
+                    storage.save(taskList, taskCount);
                     printBlock("task " + arguments + " is unmarked", "  " + taskList[index]);
                 } else if (command.equals("todo")) {
                     addTodo(arguments);
@@ -80,6 +86,29 @@ public class JamaL {
         System.out.println("It's " + NAME + ".");
         System.out.println("What do you want.");
         System.out.println(DIVIDER);
+    }
+
+    /**
+     * Fills taskList from the save file. Problems are reported to the user
+     * but never stop the chatbot from starting; it just starts with fewer
+     * (or no) tasks.
+     */
+    private static void loadTasks() {
+        try {
+            for (Task task : storage.load()) {
+                if (taskCount >= MAX_TASKS) {
+                    printBlock("save file has more than " + MAX_TASKS + " tasks. ignoring the rest.");
+                    break;
+                }
+                taskList[taskCount++] = task;
+            }
+            if (storage.getCorruptLineCount() > 0) {
+                printBlock("skipped " + storage.getCorruptLineCount()
+                        + " broken line(s) in the save file.");
+            }
+        } catch (JamaLException e) {
+            printBlock(e.getMessage());
+        }
     }
 
     /** Prints the exit message. */
@@ -193,6 +222,7 @@ public class JamaL {
             throw new JamaLException("list's full.");
         }
         taskList[taskCount++] = newTask;
+        storage.save(taskList, taskCount);
         String noun = taskCount > 1 ? " tasks now." : " task now.";
         printBlock("added:", "  " + newTask, "you got " + taskCount + noun);
     }
