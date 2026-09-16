@@ -47,6 +47,17 @@ public abstract class Task {
     }
 
     /**
+     * Returns the task as one line of the save file, e.g. {@code T | 1 | read book}.
+     * Subclasses append their date/time fields by overriding this and calling
+     * {@code super.toFileString()} first, the same way {@link #toString()} works.
+     *
+     * @return Line representing this task in the save file.
+     */
+    public String toFileString() {
+        return getTypeIcon() + " | " + (isDone ? "1" : "0") + " | " + description;
+    }
+
+    /**
      * Returns the task formatted for display, e.g. {@code [T][X] read book}.
      * Subclasses append their date/time details by overriding this and calling
      * {@code super.toString()} first.

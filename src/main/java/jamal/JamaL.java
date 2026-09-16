@@ -30,9 +30,13 @@ public class JamaL {
      */
     private static final ArrayList<Task> taskList = new ArrayList<>();
 
+    /** Reads and writes the task list to ./data/jamal.txt. */
+    private static final Storage storage = new Storage();
+
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
         greeting();
+        loadTasks();
         while (true) {
             // Split into the command word and everything after it
             String[] input = in.nextLine().trim().split(" ", 2);
@@ -52,10 +56,12 @@ public class JamaL {
                 } else if (command.equals("mark")) {
                     int index = parseTaskIndex(arguments, "mark");
                     taskList.get(index).setDone(true);
+                    storage.save(taskList);
                     printBlock("task " + arguments + " is marked", "  " + taskList.get(index));
                 } else if (command.equals("unmark")) {
                     int index = parseTaskIndex(arguments, "unmark");
                     taskList.get(index).setDone(false);
+                    storage.save(taskList);
                     printBlock("task " + arguments + " is unmarked", "  " + taskList.get(index));
                 } else if (command.equals("delete")) {
                     deleteTask(parseTaskIndex(arguments, "delete"));
@@ -83,6 +89,24 @@ public class JamaL {
         System.out.println("It's " + NAME + ".");
         System.out.println("What do you want.");
         System.out.println(DIVIDER);
+    }
+
+    /**
+     * Fills taskList from the save file. Problems are reported to the user
+     * but never stop the chatbot from starting; it just starts with fewer
+     * (or no) tasks.
+     */
+    private static void loadTasks() {
+        try {
+            // No size limit to check: the ArrayList grows as needed.
+            taskList.addAll(storage.load());
+            if (storage.getCorruptLineCount() > 0) {
+                printBlock("skipped " + storage.getCorruptLineCount()
+                        + " broken line(s) in the save file.");
+            }
+        } catch (JamaLException e) {
+            printBlock(e.getMessage());
+        }
     }
 
     /** Prints the exit message. */
@@ -188,9 +212,11 @@ public class JamaL {
      * Takes a {@code Task}, so it works for every task type.
      *
      * @param newTask Task to add to the list.
+     * @throws JamaLException If the updated list cannot be saved.
      */
-    private static void addTask(Task newTask) {
+    private static void addTask(Task newTask) throws JamaLException {
         taskList.add(newTask);
+        storage.save(taskList);
         printBlock("added:", "  " + newTask, "you got " + taskCountText() + " now.");
     }
 
@@ -200,9 +226,11 @@ public class JamaL {
      * the next "list" stays continuous.
      *
      * @param index Zero-based index, already checked by parseTaskIndex.
+     * @throws JamaLException If the updated list cannot be saved.
      */
-    private static void deleteTask(int index) {
+    private static void deleteTask(int index) throws JamaLException {
         Task removed = taskList.remove(index);
+        storage.save(taskList);
         printBlock("gone:", "  " + removed, "you got " + taskCountText() + " left.");
     }
 
