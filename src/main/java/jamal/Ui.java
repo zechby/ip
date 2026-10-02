@@ -94,4 +94,22 @@ public class Ui {
         }
         showMessage(lines);
     }
+
+    /**
+     * Prints the tasks matching a find command, numbered starting from 1.
+     *
+     * @param matches Tasks that matched the keyword.
+     */
+    public void showFoundTasks(List<Task> matches) {
+        if (matches.isEmpty()) {
+            showMessage("nothing matches.");
+            return;
+        }
+        String[] lines = new String[matches.size() + 1];
+        lines[0] = "found these:";
+        for (int i = 0; i < matches.size(); i++) {
+            lines[i + 1] = (i + 1) + "." + matches.get(i);
+        }
+        showMessage(lines);
+    }
 }

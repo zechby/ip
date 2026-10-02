@@ -89,6 +89,23 @@ public class TaskList {
     }
 
     /**
+     * Returns every task whose description contains the keyword, ignoring case.
+     *
+     * @param keyword Text to look for.
+     * @return Matching tasks, in list order.
+     */
+    public List<Task> find(String keyword) {
+        String lowerKeyword = keyword.toLowerCase();
+        List<Task> matches = new ArrayList<>();
+        for (Task task : tasks) {
+            if (task.getDescription().toLowerCase().contains(lowerKeyword)) {
+                matches.add(task);
+            }
+        }
+        return matches;
+    }
+
+    /**
      * Returns the number of tasks with the right singular/plural noun,
      * e.g. "1 task" or "3 tasks".
      *

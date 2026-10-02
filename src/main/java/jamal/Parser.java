@@ -4,6 +4,7 @@ import jamal.command.AddCommand;
 import jamal.command.Command;
 import jamal.command.DeleteCommand;
 import jamal.command.ExitCommand;
+import jamal.command.FindCommand;
 import jamal.command.ListCommand;
 import jamal.command.MarkCommand;
 import jamal.task.Deadline;
@@ -42,6 +43,11 @@ public class Parser {
             return new MarkCommand(parseTaskIndex(arguments, "unmark"), false);
         case "delete":
             return new DeleteCommand(parseTaskIndex(arguments, "delete"));
+        case "find":
+            if (arguments.isEmpty()) {
+                throw new JamaLException("find what.");
+            }
+            return new FindCommand(arguments);
         case "todo":
             return parseTodo(arguments);
         case "deadline":
