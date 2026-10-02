@@ -2,11 +2,16 @@ package jamal;
 
 import jamal.command.Command;
 
+/**
+ * Entry point of the JamaL chatbot, a deadpan command-line task manager.
+ * Wires together the Ui, Storage, TaskList and Parser, then runs the main loop.
+ */
 public class JamaL {
     private final Ui ui;
     private final Storage storage;
     private TaskList tasks;
 
+    /** Creates the chatbot with an empty task list and the default save file. */
     public JamaL() {
         ui = new Ui();
         storage = new Storage();
@@ -30,6 +35,10 @@ public class JamaL {
         }
     }
 
+    /**
+     * Greets the user, loads saved tasks, then reads and runs commands
+     * until the user types "bye".
+     */
     public void run() {
         ui.showWelcome();
         loadTasks();
@@ -48,6 +57,11 @@ public class JamaL {
         ui.showGoodbye();
     }
 
+    /**
+     * Starts the chatbot.
+     *
+     * @param args Command-line arguments (unused).
+     */
     public static void main(String[] args) {
         new JamaL().run();
     }
