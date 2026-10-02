@@ -24,13 +24,19 @@ import jamal.task.Todo;
  * The second field is 1 if the task is done and 0 if not.
  */
 public class Storage {
-    /** Separator between fields, as a regex for {@link String#split}. "|" is escaped because it means "or" in regex. */
+    /**
+     * Separator between fields, as a regex for {@link String#split}.
+     * "|" is escaped because it means "or" in regex.
+     */
     private static final String SEPARATOR_REGEX = " \\| ";
 
     /** Location of the save file. */
     private final Path filePath;
 
-    /** Number of lines skipped during the most recent {@link #load()} because they were not in the expected format. */
+    /**
+     * Number of lines skipped during the most recent {@link #load()}
+     * because they were not in the expected format.
+     */
     private int corruptLineCount = 0;
 
     /**

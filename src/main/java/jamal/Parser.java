@@ -27,6 +27,9 @@ public class Parser {
         String[] input = fullCommand.trim().split(" ", 2);
         String commandWord = input[0];
         String arguments = input.length > 1 ? input[1].trim() : "";
+        if (commandWord.isEmpty()) {
+            throw new JamaLException("say something.");
+        }
 
         switch (commandWord) {
         case "bye":
@@ -72,10 +75,25 @@ public class Parser {
         }
     }
 
+    /**
+     * Rejects task text containing "|", which the save file uses to separate
+     * fields. Without this check the task would save, then be dropped as a
+     * broken line the next time the app starts.
+     *
+     * @param arguments Task text typed by the user.
+     * @throws JamaLException If the text contains "|".
+     */
+    private static void checkNoSeparator(String arguments) throws JamaLException {
+        if (arguments.contains("|")) {
+            throw new JamaLException("no | in tasks. it breaks the save file.");
+        }
+    }
+
     private static Command parseTodo(String description) throws JamaLException {
         if (description.isEmpty()) {
             throw new JamaLException("todo what.");
         }
+        checkNoSeparator(description);
         return new AddCommand(new Todo(description));
     }
 
@@ -85,6 +103,7 @@ public class Parser {
         if (parts.length < 2 || parts[0].trim().isEmpty() || parts[1].trim().isEmpty()) {
             throw new JamaLException("deadline what /by when.");
         }
+        checkNoSeparator(arguments);
         return new AddCommand(new Deadline(parts[0].trim(), parts[1].trim()));
     }
 
@@ -98,6 +117,7 @@ public class Parser {
         if (fromAndTo.length < 2 || fromAndTo[0].trim().isEmpty() || fromAndTo[1].trim().isEmpty()) {
             throw new JamaLException("event what /from when /to when.");
         }
+        checkNoSeparator(arguments);
         return new AddCommand(new Event(descAndRest[0].trim(), fromAndTo[0].trim(), fromAndTo[1].trim()));
     }
 }

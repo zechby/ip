@@ -43,6 +43,7 @@ Notes on the format:
 * Words in `UPPER_CASE` are what you fill in.
 * `INDEX` is the number shown next to the task in `list`, starting from 1.
 * `WHEN`, `START` and `END` are free text. JamaL stores them exactly as you type them.
+* Task text can't contain `|`, because the save file uses it to separate fields.
 
 ## Adding a todo: `todo`
 
